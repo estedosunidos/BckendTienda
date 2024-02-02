@@ -15,5 +15,16 @@ router.put('/actualizar_cliente_guest/:id',auth.auth,clientecontroller.actualiza
 router.post('/registro_direcciones_cliente',auth.auth,clientecontroller.registro_direcciones_cliente)
 router.get('/obtener_direcciones_cliente/:id',auth.auth,clientecontroller.obtener_direcciones_cliente)
 //router.put('/cambiar_direcciones_principal__cliente/:id/:cliente',auth.auth,clientecontroller.cambiar_direcciones_principal__cliente)
+//contacto
+router.post('/enviar_mensaje_contacto',clientecontroller.enviarmensaje_contacto)
+
+router.get('/obtener_ordenes_cliente',clientecontroller.obtener_ordenes_cliente)
+router.get('/obtener_detalles_ordenes_cliente/:id',clientecontroller.obtener_detalles_ordenes_cliente)
+//reviews
+
+router.post('/emitirreviewproductocliente',auth.auth,clientecontroller.emitirreviewproductocliente)
+router.get('/obtenerdireccionprincipalcliente/:id',auth.auth,clientecontroller.obtenerdireccionprincipalcliente)
+
+
 module.exports = router
 

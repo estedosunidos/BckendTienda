@@ -1,70 +1,88 @@
 const cliente = require("../models/cliente");
+const contacto = require("../models/contacto");
 const bcrypt = require("bcrypt-nodejs");
 const jwt = require("../helper/jwt");
 const { hash } = require("bcrypt");
-var dirreccion = require('../models/dirrecciones');
-//------------------------------------------------------------------------------//
-const login_cliente = async function (req, res) {
-  var data = req.body;
-  var cliente_arr = [];
-  cliente_arr = await cliente.find({ email: data.email });
-  if (cliente_arr.length === 0) {
-    res
-      .status(200)
-      .send({ message: "No se encontro el correo", data: undefined });
-  } else {
-    let user = cliente_arr[0];
-    bcrypt.compare(data.passworld, user.password, async function (err, check) {
-      if (!check) {
-        res.status(200).send({ data: user, token: jwt.createToken(user) });
-      } else {
-        res.status(403).send({ message: "No es igual la contraseña" });
-      }
-    });
+var dirreccion = require("../models/dirrecciones");
+var venta = require("../models/venta");
+var review = require("../models/review");
+const login_cliente = async (req, res) => {
+  try {
+    const data = req.body;
+    const clienteArr = await cliente.find({ email: data.email });
+
+    if (clienteArr.length === 0) {
+      return res
+        .status(200)
+        .json({ message: "No se encontró el correo", data: undefined });
+    }
+
+    const user = clienteArr[0];
+    const passwordMatch = await bcrypt.compare(data.passworld, user.password);
+
+    if (passwordMatch) {
+      return res.status(200).json({ data: user, token: jwt.createToken(user) });
+    } else {
+      return res.status(403).json({ message: "No es igual la contraseña" });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Error en el servidor" });
   }
 };
-//------------------------------------------------------------------------------------//
-const listarclientes = async function (req, res) {
-  let tipo = req.params["tipo"];
-  let filtro = req.params["filtro"];
-  if (tipo == null || tipo == "null") {
-    let registro = await cliente.find();
-    res.status(200).send({ data: registro });
-  } else {
-    if (tipo == "apellido") {
-      let registro = await cliente.find({
+
+const listarclientes = async (req, res) => {
+  try {
+    const tipo = req.params.tipo;
+    const filtro = req.params.filtro;
+
+    if (!tipo || tipo === "null") {
+      const registro = await cliente.find();
+      return res.status(200).json({ data: registro });
+    }
+
+    if (tipo === "apellido") {
+      const registro = await cliente.find({
         apellido: new RegExp(filtro, "i"),
       });
-      res.status(200).send({ data: registro });
-    } else if (tipo == "email") {
-      let registro = await cliente.find({ emal: new RegExp(filtro, "i") });
-      res.status(200).send({ data: registro });
+      return res.status(200).json({ data: registro });
+    } else if (tipo === "email") {
+      const registro = await cliente.find({ email: new RegExp(filtro, "i") });
+      return res.status(200).json({ data: registro });
     }
-  }
-};
-//-----------------------------------------------------------------------------------//
-const registro_cliente_admin = async function (req, res) {
-  var data = req.body;
-  var resp = await cliente.create(data);
-  res.status(200).send({ data: resp });
-};
-//----------------------------------------------------------------------------------//
-const obtener_cliente_admin = async function (req, res) {
-  var id = req.params["id"];
-  try {
-    var rag = await cliente.findById({ _id: id });
-    res.status(200).send({ data: rag });
   } catch (error) {
-    res.status(500).send({ data: undefined });
+    console.error(error);
+    return res.status(500).json({ message: "Error en el servidor" });
   }
 };
-//---------------------------------------------------------------------------------------//
-const actualizar_cliente_Admin = async function (req, res) {
-  var id = req.params["id"];
-  var data = req.body;
-  var reg = await cliente.findByIdAndUpdate(
-    { _id: id },
-    {
+
+const registro_cliente_admin = async (req, res) => {
+  try {
+    const data = req.body;
+    const resp = await cliente.create(data);
+    return res.status(200).json({ data: resp });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Error en el servidor" });
+  }
+};
+
+const obtener_cliente_admin = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const rag = await cliente.findById(id);
+    return res.status(200).json({ data: rag });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ data: undefined });
+  }
+};
+
+const actualizar_cliente_Admin = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const data = req.body;
+    const reg = await cliente.findByIdAndUpdate(id, {
       nombre: data.nombre,
       apellido: data.apellido,
       email: data.email,
@@ -72,88 +90,184 @@ const actualizar_cliente_Admin = async function (req, res) {
       f_nacimiento: data.f_nacimiento,
       genero: data.genero,
       cedula: data.cedula,
-    }
-  );
-  res.status(200).send({ data: reg });
-};
-//--------------------------------------------------------------------------------//
-const eliminar_cliente_Admin = async function (req, res) {
-  var id = req.params["id"];
-  let reg = await cliente.findByIdAndRemove({ _id: id });
-  res.status(200).send({ data: reg });
-};
-const obtener_cliente_guest = async function (req, res) {
-    var id = req.params["id"];
-    try {
-      var rag = await cliente.findById({ _id: id });
-      res.status(200).send({ data: rag });
-    } catch (error) {
-      res.status(500).send({ data: undefined });
-    }
+    });
+    return res.status(200).json({ data: reg });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Error en el servidor" });
   }
-  const actualizar_cliente_guest = async function (req, res) {
-    var id = req.params["id"];
-    var data= req.body
-    if(data.password) {
-      bcrypt.hash(data.password,null,null,async function(err,has){
-        var reg = await cliente.findByIdAndUpdate({ _id: id},{
+};
+
+const eliminar_cliente_Admin = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const reg = await cliente.findByIdAndRemove(id);
+    return res.status(200).json({ data: reg });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ data: undefined });
+  }
+};
+
+const obtener_cliente_guest = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const rag = await cliente.findById(id);
+    return res.status(200).json({ data: rag });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ data: undefined });
+  }
+};
+
+const actualizar_cliente_guest = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const data = req.body;
+
+    if (data.password) {
+      bcrypt.hash(data.password, null, null, async function (err, hash) {
+        const reg = await cliente.findByIdAndUpdate(id, {
           nombres: data.nombres,
           apellido: data.apellido,
-          telefono:data.telefono,
-          f_nacimiento:data.f_nacimiento,
-          cedula:data.cedula,
-          genero:data.genero,
-          pais:data.pais,
-          password:hash
-    
-        })
-        res.status(200).send({data:reg})
-      })
-     
-    }else{
-      var reg = await cliente.findByIdAndUpdate({ _id: id},{
+          telefono: data.telefono,
+          f_nacimiento: data.f_nacimiento,
+          cedula: data.cedula,
+          genero: data.genero,
+          pais: data.pais,
+          password: hash,
+        });
+        return res.status(200).json({ data: reg });
+      });
+    } else {
+      const reg = await cliente.findByIdAndUpdate(id, {
         nombres: data.nombres,
         apellido: data.apellido,
-        telefono:data.telefono,
-        f_nacimiento:data.f_nacimiento,
-        cedula:data.cedula,
-        genero:data.genero,
-        pais:data.pais
-  
-      })
-      res.status(200).send({data:reg})
+        telefono: data.telefono,
+        f_nacimiento: data.f_nacimiento,
+        cedula: data.cedula,
+        genero: data.genero,
+        pais: data.pais,
+      });
+      return res.status(200).json({ data: reg });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ data: undefined });
+  }
+};
 
+const registro_direcciones_cliente = async (req, res) => {
+  try {
+    const data = req.body;
+
+    if (data.principal) {
+      const direcciones = await dirreccion.find({ cliente: data.cliente });
+
+      for (const element of direcciones) {
+        await dirreccion.findOneAndUpdate(
+          { _id: element.id },
+          { principal: false }
+        );
+      }
     }
-  }
-  const registro_direcciones_cliente= async function(req,res){
-    let data=req.body
-    if(data.principal){
-      let direccion = await dirreccion.find({cliente:data.cliente})
-      direccion.forEach(async(element)=>{
-        await dirreccion.findOneAndUpdate({_id:element.id},{principal:false})
-      })
-    }
-    let reg = await  dirreccion.create(data)
+
+    const reg = await dirreccion.create(data);
     console.log(reg);
-    res.status(200).send({ data: reg });
-  
+    return res.status(200).json({ data: reg });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ data: undefined });
   }
-  const obtener_direcciones_cliente= async function(req,res){
-   var id=req.params['id']
-   let direccion = await dirreccion.find({cliente:id}).populate('cliente').sort({crearedAt:-1})
-   res.status(200).send({ data: direccion });
+};
+
+const obtener_direcciones_cliente = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const direcciones = await dirreccion
+      .find({ cliente: id })
+      .populate("cliente")
+      .sort({ createdAt: -1 });
+    return res.status(200).json({ data: direcciones });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ data: undefined });
   }
-  //const cambiar_direcciones_principal__cliente= async function(req,res){
-    //let id=req.params['id']
-    //var data=req.params['cliente']
-   // let direccion = await dirreccion.find({cliente:data.cliente})
-     // direccion.forEach(async(element)=>{
-       // await dirreccion.findOneAndUpdate({id:element.id},{principal:false})
-      //})
-      //await dirreccion.findOneAndUpdate({id:id})
-    //res.status(200).send({ data: true },{principal:true});
-  
- // }
+};
+
+const obtenerdireccionprincipalcliente = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const direccion = await dirreccion.findOne({
+      cliente: id,
+      principal: true,
+    });
+
+    if (!direccion) {
+      return res.status(200).json({ data: undefined });
+    }
+
+    return res.status(200).json({ data: direccion });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ data: undefined });
+  }
+};
+
+const enviarmensaje_contacto = async (req, res) => {
+  try {
+    const data = req.body;
+    data.estado = "abierto";
+    const reg = await contacto.create(data);
+    return res.status(200).json({ data: reg });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ data: undefined });
+  }
+};
+
+const obtener_ordenes_cliente = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const reg = await venta
+      .find({ cliente: id })
+      .populate("cliente")
+      .sort({ createdAt: -1 });
+
+    if (reg.length > 0) {
+      return res.status(200).json({ data: reg });
+    } else {
+      return res.status(500).json({ data: undefined });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ data: undefined });
+  }
+};
+
+const obtener_detalles_ordenes_cliente = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const venta = await venta.findById(id).populate("direccion");
+    const detalle = await venta.find({ detalle: id }).populate("producto");
+
+    return res.status(500).json({ data: venta, detalle: detalle });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ data: undefined });
+  }
+};
+
+const emitirreviewproductocliente = async (req, res) => {
+  try {
+    const data = req.body;
+    const reg = await review.create(data);
+    return res.status(200).json({ data: reg });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ data: undefined });
+  }
+};
 
 module.exports = {
   login_cliente,
@@ -166,5 +280,10 @@ module.exports = {
   actualizar_cliente_guest,
   registro_direcciones_cliente,
   obtener_direcciones_cliente,
-  //cambiar_direcciones_principal__cliente
+  obtenerdireccionprincipalcliente,
+  enviarmensaje_contacto,
+  obtener_ordenes_cliente,
+  obtener_detalles_ordenes_cliente,
+  emitirreviewproductocliente,
 };
+

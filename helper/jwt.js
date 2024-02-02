@@ -1,18 +1,25 @@
-var jwt = require("jwt-simple")
-var moment=require("moment")
-var secret="ivanvargas"
+const jwt = require("jwt-simple");
+const moment = require("moment");
 
-exports.createToken=function(user){
-    var payload={
-        sub:user._id,
-        nombre:user.nombre,
-        apellidos:user.apellido,
-        email:user.email,
-        rol:user.rol,
-        iat: moment().unix(),
-        exp:moment().add(7,"days").unix()
+const secret = "ivanvargas";
 
-    }
-    console.log("wwww",payload)
-    return jwt.encode(payload,secret)
-}
+exports.createToken = function (user) {
+  try {
+    const payload = {
+      sub: user._id,
+      nombre: user.nombre,
+      apellidos: user.apellido,
+      email: user.email,
+      rol: user.rol,
+      iat: moment().unix(),
+      exp: moment().add(7, "days").unix()
+    };
+
+    console.log("Token Payload:", payload); // Puedes omitir o personalizar esto según tus necesidades
+
+    return jwt.encode(payload, secret);
+  } catch (error) {
+    console.error("Error creating token:", error);
+    throw error; // Puedes manejar el error según tus necesidades
+  }
+};

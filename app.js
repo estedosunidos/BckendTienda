@@ -27,6 +27,7 @@ const product_route = require('../Backend/routes/product');
 const cupon_route = require('../Backend/routes/cupon');
 const config_router = require('../Backend/routes/config');
 const carrito_router = require('../Backend/routes/carrito');
+const descuento_router = require('../Backend/routes/Descuento.');
 
 mongoose.connect('mongodb://127.0.0.1:27017/Tienda');
 
@@ -58,5 +59,7 @@ app.use('/api', product_route)
 app.use('/api', cupon_route)
 app.use('/api', config_router)
 app.use('/api', carrito_router)
+app.use('/api', descuento_router)
+
 
 module.exports = app;
